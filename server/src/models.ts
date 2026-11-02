@@ -1,0 +1,17 @@
+import mongoose, { Schema } from 'mongoose';
+const suspect = new Schema({ suspectId: String, name: String, age: Number, occupation: String, relationToVictim: String, description: String, appearance: String }, { _id: false });
+const blueprint = new Schema({ culpritSuspectId: String, motive: String, method: String, timeline: [Schema.Types.Mixed], clues: [Schema.Types.Mixed], evidencePlan: [Schema.Types.Mixed], solutionSummary: String }, { _id: false });
+const CaseSchema = new Schema({ userId: { type: Schema.Types.ObjectId, ref: 'User', index: true }, seedText: String, difficulty: { type: String, enum: ['easy','medium','hard'] }, status: { type: String, enum: ['queued','generating','ready','failed','solved','failed_attempt'], default: 'queued' }, generation: { stage: String, progressPct: Number, error: String, startedAt: Date, finishedAt: Date }, public: { title: String, setting: String, briefing: String, victim: { name: String, description: String }, suspects: [suspect] }, blueprint: { type: blueprint, select: false }, discoveredClueIds: { type: [String], default: [] }, hintsUsed: { type: Number, default: 0 }, hintLog: [Schema.Types.Mixed], accusationLocked: { type: Boolean, default: false }, firstOpenedAt: Date, shareToken: { type: String, sparse: true, unique: true } }, { timestamps: true });
+CaseSchema.index({ userId: 1, createdAt: -1 });
+const EvidenceSchema = new Schema({ caseId: { type: Schema.Types.ObjectId, index: true }, evidenceId: String, type: String, title: String, description: String, discoveredAt: String, order: Number, payload: Schema.Types.Mixed, linkedClueIds: { type: [String], select: false } }, { timestamps: true });
+EvidenceSchema.index({ caseId: 1, order: 1 });
+const UserSchema = new Schema({ email: { type: String, unique: true, sparse: true, lowercase: true }, passwordHash: String, displayName: { type: String, minlength: 2, maxlength: 30 }, isGuest: { type: Boolean, default: false }, stats: { casesSolved: { type: Number, default: 0 }, casesPlayed: { type: Number, default: 0 }, totalScore: { type: Number, default: 0 } } }, { timestamps: true });
+const AttemptSchema = new Schema({ caseId: { type: Schema.Types.ObjectId, unique: true, index: true }, userId: Schema.Types.ObjectId, accusedSuspectId: String, reasoning: String, citedEvidenceIds: [String], isCorrect: Boolean, score: Number, breakdown: Schema.Types.Mixed, submittedAt: Date, timeSpentSeconds: Number }, { timestamps: true });
+const AssetSchema = new Schema({ caseId: { type: Schema.Types.ObjectId, index: true }, kind: { type: String, enum: ['portrait','image','cctv_frame'] }, storageKey: String, mimeType: String, width: Number, height: Number, isPlaceholder: { type: Boolean, default: false }, promptUsed: { type: String, select: false } }, { timestamps: true });
+// Explicit `any` keeps the cached-model pattern compatible with Mongoose's
+// inferred model unions during hot reload and across TypeScript versions.
+export const User: any = mongoose.models.User || mongoose.model('User', UserSchema);
+export const MysteryCase: any = mongoose.models.Case || mongoose.model('Case', CaseSchema);
+export const EvidenceModel: any = mongoose.models.Evidence || mongoose.model('Evidence', EvidenceSchema);
+export const Attempt: any = mongoose.models.Attempt || mongoose.model('Attempt', AttemptSchema);
+export const Asset: any = mongoose.models.Asset || mongoose.model('Asset', AssetSchema);

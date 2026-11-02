@@ -1,0 +1,2 @@
+/** @type {import('tailwindcss').Config} */
+export default { content: ['./index.html','./src/**/*.{ts,tsx}'], theme: { extend: { colors: { ink:'#0d0e10', panel:'#151619', line:'#28292c', muted:'#8e8d88', paper:'#ede8dd', amber:'#d3a55b', ember:'#8c4b3e' }, fontFamily:{serif:['Cormorant Garamond','Georgia','serif'],sans:['DM Sans','Arial','sans-serif'],mono:['IBM Plex Mono','monospace']} } }, plugins:[] }
