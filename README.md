@@ -40,6 +40,19 @@ The investigation UI uses these authenticated endpoints:
 
 See `server/.env.example` and `client/.env.example`. `GEMINI_TEXT_MODEL` and `GEMINI_IMAGE_MODEL` are environment-controlled; the API key stays on the server. `CLIENT_ORIGIN` must match the client origin. The session cookie is HTTP-only, SameSite=Lax, Secure in production, and expires in seven days.
 
+## Production deployment (Render + MongoDB Atlas)
+
+The included `render.yaml` configures a single Render web service that builds the shared package, API, and client, then serves both the API and the Vite client from one origin. Same-origin deployment keeps the HTTP-only session cookie working without cross-site cookie settings. The Blueprint provisions a persistent disk at `/var/data` for generated evidence files; the disk requires a paid Render service plan.
+
+1. Push this repository to GitHub.
+2. Create an Atlas cluster and database user. Add the Render service's outbound IP to the Atlas project's IP access list. If your Render plan does not provide a stable outbound IP, use Atlas's broad `0.0.0.0/0` entry only with a strong database password and understand that it permits connection attempts from any IP.
+3. In Render, create a Blueprint from the repository and apply `render.yaml`. The Blueprint generates `JWT_SECRET`; enter the Atlas connection string for the prompted `MONGODB_URI` secret. Keep `GEMINI_MOCK=true` initially, which does not require a Gemini key.
+4. Wait for the deploy, then visit `https://YOUR-SERVICE.onrender.com/api/health`. Confirm the response reports `status: ok` and `db: connected`.
+5. Open the service root URL to use the app. The client defaults to relative `/api` requests, so it is served by the same service and origin as the API.
+6. To use Gemini, set `GEMINI_MOCK=false` and add `GEMINI_API_KEY`, `GEMINI_TEXT_MODEL`, and `GEMINI_IMAGE_MODEL` as Render environment variables, then redeploy.
+
+For local development, set `CLIENT_ORIGIN=http://localhost:5173` on the server and run `npm run dev` as before. If hosting the frontend separately, set `VITE_API_BASE_URL` to the API origin plus `/api`; configure the API's `CLIENT_ORIGIN` to the frontend's exact origin. Same-origin deployment is the recommended path because the app uses secure HTTP-only cookies.
+
 ## Project structure
 
 - `shared/` — shared Zod contracts and difficulty counts.
